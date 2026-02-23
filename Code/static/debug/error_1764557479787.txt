@@ -1,0 +1,8 @@
+Exception:
+colorize_image() got an unexpected keyword argument 'contrast'
+
+Traceback:
+Traceback (most recent call last):
+  File "C:\Users\NEHA SHRI MEKA\Downloads\ABLAZE\ABLAZE\code\app.py", line 102, in process
+    result = colorize_image(str(upload_path), mode="auto",
+TypeError: colorize_image() got an unexpected keyword argument 'contrast'

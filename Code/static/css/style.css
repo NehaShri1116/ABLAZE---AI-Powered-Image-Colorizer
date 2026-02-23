@@ -1,0 +1,139 @@
+.page-bg {
+  background: #333;   /* grey */
+  min-height: calc(100vh - 64px);
+  padding: 32px 0 80px 0;
+  color: #fff;
+}
+
+/* Make main heading white on grey background */
+.page-bg h1 {
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-size: 3.2rem;
+}
+
+/* navbar (yellow) */
+.navbar-custom {
+  background: #ffc107;   /* bootstrap warning yellow */
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+/* brand style */
+.navbar-custom .navbar-brand {
+  color: #111;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* white dialog card (unchanged look) */
+.dialog-card {
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+}
+
+/* big yellow upload button */
+.btn-warning-lg {
+  background: #ffc107;
+  border-color: #ffc107;
+  color: #111;
+  font-weight: 700;
+  padding: 10px 22px;
+  border-radius: 12px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.06);
+}
+
+/* ========== PREVIEW CARDS ========== */
+/* white boxes that contain each image preview */
+.preview-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  display: inline-block;
+  max-width: 100%;
+}
+
+/* title above each preview; on dark page use light color but inside card we want heading black */
+.preview-title {
+  color: rgba(255,255,255,0.9); /* heading on dark background */
+  margin-bottom: 10px;
+}
+
+/* inside the white box we want the h5 text to look dark, so override when nested */
+.preview-card + .mt-3,
+.preview-card h5 {
+  color: #111;
+}
+
+/* preview image sizing */
+.preview-img {
+  display: block;
+  width: 100%;
+  max-width: 520px;   /* fixed maximum so both previews match visually */
+  height: auto;
+  border-radius: 8px;
+  background: #f2f2f2;
+  margin: 0 auto;
+}
+
+/* Keep both preview cards consistent on larger screens */
+@media (min-width: 992px) {
+  .col-md-6 .preview-card { width: 520px; }
+}
+
+/* slider numeric display */
+.numeric {
+  width: 54px;
+  display: inline-block;
+  text-align: center;
+  font-weight: 600;
+  margin-left: 8px;
+  font-size: 1rem;
+  color: #111;
+}
+
+/* small notes */
+.small-note {
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* form control spacing */
+.control { min-width: 200px; }
+
+/* keep form card full width on small screens */
+@media (max-width: 767px) {
+  .dialog-card { padding: 18px; }
+  .preview-img { max-width: 100%; }
+}
+
+/* ========== SAVE BUTTON (yellow with black text) ========== */
+.btn-save {
+  background: #ffc107;
+  color: #111;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-save:hover {
+  background: #ffb300;
+  color: #111;
+  text-decoration: none;
+}
+
+/* ensure headings inside the white dialog are dark */
+.dialog-card h1, .dialog-card h2, .dialog-card h3 {
+  color: #111;  /* black text inside white card */
+}
+
+/* keep small preview title visible on dark background */
+.page-bg h5 {
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 12px;
+}
