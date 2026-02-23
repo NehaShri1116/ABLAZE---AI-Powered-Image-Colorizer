@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>ABLAZE – Colorizer</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Project CSS -->
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+
+   <!-- Yellow navbar -->
+<nav class="navbar navbar-expand-lg navbar-custom shadow-sm">
+  <div class="container">
+    <a class="navbar-brand" href="/">ABLAZE</a>
+    <div class="ms-auto">
+      <a class="btn btn-outline-light btn-sm me-2" href="/">Home</a>
+      <a class="btn btn-outline-light btn-sm" href="/about">About</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Page background wrapper -->
+<div class="page-bg">
+    <!-- Main Content -->
+    <main class="container py-4">
+        <h1 class="mb-3">Image Colorizer</h1>
+
+         <!-- White dialog / card -->
+    <div class="card p-4 mb-4 dialog-card">
+        <form id="frm" action="/process" method="POST" enctype="multipart/form-data">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <label class="form-label">Choose Image</label>
+                    <input id="file_input" type="file" name="image" accept="image/*" required class="form-control">
+                </div>
+
+                <div class="col-md-8">
+                    <label class="form-label">Appearance controls</label>
+
+                    <div class="d-flex flex-wrap align-items-center gap-3 mb-3">
+                        <div class="control">
+                            <label class="small-note">Contrast (0.5 – 2.0)</label><br>
+                            <input type="range" id="contrast" name="contrast" min="0.5" max="2.0" step="0.05" value="1.0" oninput="updateNumeric('contrast');applyPreviewFilters()">
+                            <span id="contrast_val" class="numeric">1.00</span>
+                        </div>
+
+                        <div class="control">
+                            <label class="small-note">Sharpness (0.0 – 3.0)</label><br>
+                            <input type="range" id="sharpness" name="sharpness" min="0.0" max="3.0" step="0.1" value="1.0" oninput="updateNumeric('sharpness');applyPreviewFilters()">
+                            <span id="sharpness_val" class="numeric">1.0</span>
+                        </div>
+
+                        <div class="control">
+                            <label class="small-note">Noise reduction (0.0 – 1.0)</label><br>
+                            <input type="range" id="denoise" name="denoise" min="0.0" max="1.0" step="0.05" value="0.0" oninput="updateNumeric('denoise');applyPreviewFilters()">
+                            <span id="denoise_val" class="numeric">0.00</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button id="submit_btn" class="btn-warning-lg" type="submit">Upload & Colorize</button>
+                <a class="btn btn-outline-secondary" href="/colorizer">Reset</a>
+            </div>
+            <p class="text-muted mt-2">Tip: Contrast, sharpness and noise sliders update the preview instantly after colorization completes.</p>
+        </form>
+    </div>
+
+        <!-- Result Section -->
+        {% if input_image %}
+        <div class="row gx-4">
+            <!-- Original preview card -->
+            <div class="col-md-6 text-center mb-3">
+                <h5 class="preview-title">Original</h5>
+                <div class="preview-card p-3 mb-2">
+                    <img id="orig_img" src="/static/uploads/{{ input_image }}?v={{ ts }}" class="img-fluid rounded preview-img" crossorigin="anonymous">
+                </div>
+            </div>
+
+            <!-- Colorized preview card -->
+            <div class="col-md-6 text-center mb-3">
+                <h5 class="preview-title">Colorized</h5>
+                <div class="preview-card p-3 mb-2">
+                    <img id="color_src" src="/static/results/{{ output_image }}?v={{ ts }}" class="d-none" crossorigin="anonymous">
+                    <canvas id="preview_canvas" class="rounded preview-img"></canvas>
+                </div>
+
+                <div class="mt-3 d-flex justify-content-center gap-3">
+                    <a class="btn btn-save" href="/static/results/{{ output_image }}?v={{ ts }}" download>Download the Image</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</div> <!-- .page-bg -->
+
+<script>
+  // numeric UI (extended to denoise)
+  function updateNumeric(id){
+    const el = document.getElementById(id);
+    const val = parseFloat(el.value);
+    const disp = document.getElementById(id + "_val");
+    if(disp){
+      if(id === 'contrast') disp.textContent = val.toFixed(2);
+      else if(id === 'denoise') disp.textContent = val.toFixed(2);
+      else disp.textContent = val.toFixed(1);
+    }
+  }
+
+  // ====== Preview filter code (canvas) ======
+  const colorSrc = document.getElementById('color_src');
+  const canvas = document.getElementById('preview_canvas');
+  const ctx = canvas ? canvas.getContext('2d') : null;
+
+  function applyPreviewFilters(){
+    if(!ctx || !colorSrc.complete) return;
+
+    const contrastVal = parseFloat(document.getElementById('contrast').value || 1.0);
+    const sharpVal = parseFloat(document.getElementById('sharpness').value || 1.0);
+    const denoiseVal = parseFloat(document.getElementById('denoise').value || 0.0);
+
+    // choose display size (match CSS max width used in style.css)
+    const displayWidth = Math.min(colorSrc.naturalWidth, 520);
+    const displayHeight = Math.round((colorSrc.naturalHeight / colorSrc.naturalWidth) * displayWidth);
+    canvas.width = displayWidth;
+    canvas.height = displayHeight;
+
+    // For preview, we use ctx.filter for denoise (fast blur). For real denoising, server-side uses OpenCV.
+    // Map denoise (0..1) -> blur radius (px)
+    const blurRadius = denoiseVal * 4.0; // 0..4px
+
+    if('filter' in ctx){
+      ctx.filter = `blur(${blurRadius}px)`;
+    } else {
+      ctx.filter = 'none';
+    }
+
+    ctx.drawImage(colorSrc, 0, 0, displayWidth, displayHeight);
+
+    // reset filter to perform pixel edits
+    ctx.filter = 'none';
+
+    // get pixels
+    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let data = imageData.data;
+
+    // contrast adjust (simple linear contrast around 128)
+    const c = contrastVal;
+    for(let i = 0; i < data.length; i += 4){
+      for(let ch = 0; ch < 3; ch++){
+        let v = data[i + ch];
+        v = ((v - 128) * c) + 128;
+        data[i + ch] = Math.max(0, Math.min(255, Math.round(v)));
+      }
+    }
+
+    // put contrast-adjusted data back before sharpening
+    ctx.putImageData(imageData, 0, 0);
+
+    // sharpening (same kernel logic as before)
+    if(sharpVal > 0.01){
+      imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let src = imageData.data;
+      const dst = new Uint8ClampedArray(src.length);
+
+      const s = Math.max(0.0, Math.min(3.0, sharpVal));
+      const center = 1 + s * 1.2;
+      const neighbor = -0.25 * s;
+      const w = canvas.width;
+      const h = canvas.height;
+
+      function getPixel(x,y,ch){
+        if(x < 0) x = 0;
+        if(x >= w) x = w-1;
+        if(y < 0) y = 0;
+        if(y >= h) y = h-1;
+        return src[(y * w + x) * 4 + ch];
+      }
+
+      for(let y = 0; y < h; y++){
+        for(let x = 0; x < w; x++){
+          for(let ch = 0; ch < 3; ch++){
+            let accum = 0;
+            accum += center * getPixel(x,y,ch);
+            accum += neighbor * ( getPixel(x-1,y,ch) + getPixel(x+1,y,ch) + getPixel(x,y-1,ch) + getPixel(x,y+1,ch) );
+            const idx = (y * w + x) * 4 + ch;
+            dst[idx] = Math.max(0, Math.min(255, Math.round(accum)));
+          }
+          dst[(y * w + x) * 4 + 3] = src[(y * w + x) * 4 + 3];
+        }
+      }
+
+      imageData.data.set(dst);
+      ctx.putImageData(imageData, 0, 0);
+    }
+  }
+
+  // When color_src finishes loading, draw it
+  if(colorSrc){
+    colorSrc.addEventListener('load', () => {
+      setTimeout(() => applyPreviewFilters(), 60);
+    });
+    if(colorSrc.complete){
+      setTimeout(() => applyPreviewFilters(), 60);
+    }
+  }
+</script>
+
+</body>
+</html>
